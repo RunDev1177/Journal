@@ -1,0 +1,758 @@
+<!DOCTYPE html>
+<html lang="th">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>Daily Journal - บันทึกและวิเคราะห์การเทรด</title>
+  <meta name="description"
+    content="Daily Journal เว็บแอปพลิเคชันบันทึกและวิเคราะห์การเทรด สไตล์ Dark Mode ทันสมัย เชื่อมต่อ Google Sheets">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link
+    href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Prompt:wght@300;400;500;600;700&display=swap"
+    rel="stylesheet">
+  <!-- Chart.js for Equity Curve & Visualizations -->
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <link rel="stylesheet" href="style.css?v=18">
+</head>
+
+<body>
+
+  <!-- ================= AUTH OVERLAY (LOGIN) ================= -->
+  <div id="login-overlay" class="login-overlay">
+    <div class="login-card">
+      <div class="login-header">
+        <div class="brand-logo-large">
+          <span class="logo-icon">📈</span>
+          <span class="logo-text">Daily <span class="text-teal">Journal</span></span>
+        </div>
+        <p class="login-subtitle">ระบบบันทึกและวิเคราะห์การเทรดส่วนตัว</p>
+      </div>
+
+      <form id="login-form" class="login-form" autocomplete="off">
+        <div class="form-group">
+          <label for="login-username">ชื่อผู้ใช้ (Username)</label>
+          <div class="input-wrapper">
+            <input type="text" id="login-username" placeholder="Username" required autofocus>
+          </div>
+        </div>
+
+        <div class="form-group">
+          <label for="login-password">รหัสผ่าน (Password)</label>
+          <div class="input-wrapper">
+            <input type="password" id="login-password" placeholder="Password" required>
+          </div>
+        </div>
+
+        <div id="login-error" class="login-error hidden">
+          ⚠️ ชื่อผู้ใช้หรือรหัสผ่านไม่ถูกต้อง กรุณาลองใหม่อีกครั้ง
+        </div>
+
+        <button type="submit" class="btn btn-teal btn-block btn-lg" id="btn-login-submit" style="margin-top: 0.75rem;">
+          <span>เข้าสู่ระบบ</span>
+          <span class="btn-arrow">→</span>
+        </button>
+      </form>
+    </div>
+  </div>
+
+  <!-- ================= MAIN APP WRAPPER ================= -->
+  <div id="app-container" class="app-container hidden">
+
+    <!-- TOP NAVIGATION (Facebook-Style Unified Bar) -->
+    <header class="app-header">
+      <!-- 1. LEFT: BRAND LOGO -->
+      <div class="header-left">
+        <div class="brand-logo">
+          <span class="logo-icon">📈</span>
+          <span class="logo-title">Daily <span class="text-teal">Journal</span></span>
+        </div>
+      </div>
+
+      <!-- 2. CENTER: FACEBOOK-STYLE NAVIGATION TABS -->
+      <nav class="header-center-nav" id="app-top-nav" aria-label="แถบเมนูหลัก">
+        <button type="button" class="fb-nav-tab bottom-nav-item active" data-tab="home" id="tab-btn-home" title="Home">
+          <span class="tab-icon-wrapper">
+            <svg viewBox="0 0 24 24" width="22" height="22" fill="currentColor">
+              <path d="M10 20v-6h4v6h5v-8h3L12 3 2 12h3v8z" />
+            </svg>
+          </span>
+          <span class="fb-tab-indicator"></span>
+        </button>
+
+        <button type="button" class="fb-nav-tab bottom-nav-item" data-tab="trades" id="tab-btn-trades" title="รายการ">
+          <span class="tab-icon-wrapper">
+            <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2"
+              stroke-linecap="round" stroke-linejoin="round">
+              <line x1="8" y1="6" x2="21" y2="6"></line>
+              <line x1="8" y1="12" x2="21" y2="12"></line>
+              <line x1="8" y1="18" x2="21" y2="18"></line>
+              <circle cx="4" cy="6" r="1.5" fill="currentColor"></circle>
+              <circle cx="4" cy="12" r="1.5" fill="currentColor"></circle>
+              <circle cx="4" cy="18" r="1.5" fill="currentColor"></circle>
+            </svg>
+          </span>
+          <span class="fb-tab-indicator"></span>
+        </button>
+
+
+        <button type="button" class="fb-nav-tab bottom-nav-item" data-tab="portfolios" id="tab-btn-portfolios"
+          title="พอร์ต">
+          <span class="tab-icon-wrapper">
+            <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2"
+              stroke-linecap="round" stroke-linejoin="round">
+              <rect x="2" y="7" width="20" height="14" rx="2" ry="2"></rect>
+              <path d="M16 21V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v16"></path>
+            </svg>
+          </span>
+          <span class="fb-tab-indicator"></span>
+        </button>
+
+        <button type="button" class="fb-nav-tab bottom-nav-item" data-tab="settings" id="tab-btn-settings"
+          title="ตั้งค่า">
+          <span class="tab-icon-wrapper">
+            <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2"
+              stroke-linecap="round" stroke-linejoin="round">
+              <circle cx="12" cy="12" r="3"></circle>
+              <path
+                d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z">
+              </path>
+            </svg>
+          </span>
+          <span class="fb-tab-indicator"></span>
+        </button>
+      </nav>
+
+      <!-- 3. RIGHT: SPACER (FOR PERFECT TABS CENTERING) -->
+      <div class="header-right-spacer"></div>
+    </header>
+
+    <!-- MAIN DASHBOARD CONTENT -->
+    <main class="app-main" id="app-main" data-mobile-tab="home">
+
+      <!-- SUB-HEADER / PORTFOLIO TOOLBAR (MOVED DOWN) -->
+      <div class="portfolio-bar">
+        <div class="portfolio-selector-wrapper">
+          <label for="portfolio-select" class="selector-label">พอร์ต:</label>
+          <div class="select-styled">
+            <select id="portfolio-select" aria-label="เลือกพอร์ตการเทรด">
+              <!-- Options populated by JS -->
+            </select>
+          </div>
+        </div>
+      </div>
+
+      <!-- 1. KEY METRICS CARDS -->
+      <section class="metrics-grid" id="section-metrics">
+        <div class="metric-card">
+          <div class="metric-label">Win Rate (% ชนะ)</div>
+          <div class="metric-value text-teal" id="metric-win-rate">0.0%</div>
+          <div class="metric-sub" id="metric-win-count">ชนะ 0 / แพ้ 0 ไม้</div>
+        </div>
+
+        <div class="metric-card">
+          <div class="metric-label">ออเดอร์ทั้งหมด</div>
+          <div class="metric-value" id="metric-total-trades">0</div>
+          <div class="metric-sub" id="metric-total-trades-sub">ปิดแล้ว 0 / กำลังถือ 0 ไม้</div>
+        </div>
+
+        <div class="metric-card">
+          <div class="metric-label">TP / SL</div>
+          <div class="metric-value metric-value-split">
+            <span class="text-win" id="metric-tp-count">0</span>
+            <span class="divider">/</span>
+            <span class="text-loss" id="metric-sl-count">0</span>
+          </div>
+          <div class="metric-sub" id="metric-tp-sl-sub">TP 0.0% / SL 0.0%</div>
+        </div>
+
+        <div class="metric-card">
+          <div class="metric-label">ความเสี่ยงต่อออเดอร์</div>
+          <div class="metric-value text-teal" id="metric-risk-val">0.5%</div>
+          <div class="metric-sub" id="metric-risk-sub">≈ $0.00 ต่อไม้</div>
+        </div>
+      </section>
+
+      <!-- 2. CHARTS & CALENDAR SECTION -->
+      <section class="visuals-grid" id="section-visuals">
+        <!-- Equity Curve Chart -->
+        <div class="card chart-card">
+          <div class="card-header">
+            <div class="card-title">
+              <span>📈 กราฟพอร์ต</span>
+            </div>
+            <div class="card-actions">
+              <span class="badge badge-teal" id="chart-portfolio-name">ทุกพอร์ต</span>
+            </div>
+          </div>
+          <div class="chart-body">
+            <canvas id="equityChart"></canvas>
+          </div>
+        </div>
+
+        <!-- Daily P&L Calendar -->
+        <div class="card calendar-card">
+          <div class="card-header">
+            <div class="card-title">
+              <span>📅 ปฏิทิน</span>
+            </div>
+            <div class="calendar-controls">
+              <button type="button" class="btn-calendar-nav" id="btn-cal-prev">&lt;</button>
+              <span class="calendar-month-label" id="calendar-month-label">ตุลาคม 2026</span>
+              <button type="button" class="btn-calendar-nav" id="btn-cal-next">&gt;</button>
+            </div>
+          </div>
+          <div class="calendar-body">
+            <div class="calendar-weekdays">
+              <span>อา</span><span>จ</span><span>อ</span><span>พ</span><span>พฤ</span><span>ศ</span><span>ส</span>
+            </div>
+            <div class="calendar-days-grid" id="calendar-days-grid">
+              <!-- Days populated dynamically by JS -->
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- 3. TRADE LOG / FILTER SECTION -->
+      <section class="card trades-card" id="section-trades">
+        <div class="trades-toolbar">
+          <div class="toolbar-search">
+            <span class="search-icon">🔍</span>
+            <input type="text" id="filter-search" placeholder="ค้นหา Symbol, Setup, บันทึก..."
+              aria-label="ค้นหาการเทรด">
+          </div>
+
+          <div class="toolbar-filters">
+            <!-- Filter Outcome -->
+            <select id="filter-outcome" aria-label="กรองตามสถานะ">
+              <option value="ALL">สถานะ: ทั้งหมด</option>
+              <option value="รอ">รอ</option>
+              <option value="กำลังถือ">กำลังถือ</option>
+              <option value="TP">TP (ชนะ)</option>
+              <option value="SL">SL (แพ้)</option>
+              <option value="BE">BE (เสมอ)</option>
+            </select>
+
+            <!-- Filter Symbol -->
+            <select id="filter-symbol" aria-label="กรองตามคู่เทรด">
+              <option value="ALL">คู่เทรด: ทั้งหมด</option>
+            </select>
+
+            <!-- Export Buttons -->
+            <button type="button" class="btn btn-secondary btn-sm" id="btn-export-csv" title="ส่งออกเป็น CSV / Excel">
+              📥 ส่งออก CSV
+            </button>
+            <button type="button" class="btn btn-secondary btn-sm" id="btn-open-sync" title="ตั้งค่า Google Sheet Sync">
+              ☁️ ซิงค์ Cloud
+            </button>
+          </div>
+        </div>
+
+        <!-- Trades Table View (PC) -->
+        <div class="table-responsive">
+          <table class="trades-table" id="trades-table">
+            <thead>
+              <tr>
+                <th>วันที่/เวลา</th>
+                <th>สินทรัพย์</th>
+                <th>ฝั่ง</th>
+                <th>ขนาด Lot</th>
+                <th>ราคาเข้า</th>
+                <th>SL (Pips)</th>
+                <th>กราฟ</th>
+                <th>สถานะ</th>
+                <th>จัดการ</th>
+              </tr>
+            </thead>
+            <tbody id="trades-tbody">
+              <!-- Rows injected by JS -->
+            </tbody>
+          </table>
+        </div>
+
+        <!-- Empty State -->
+        <div id="trades-empty-state" class="empty-state hidden">
+          <div class="empty-icon">📝</div>
+          <h3>ยังไม่มีรายการบันทึกการเทรด</h3>
+          <p>กดปุ่ม <strong>+</strong> เพื่อเริ่มบันทึกไม้แรกของคุณ</p>
+          <button type="button" class="btn btn-teal" id="btn-empty-add-trade">+ บันทึกการเทรดตอนนี้</button>
+        </div>
+      </section>
+
+      <!-- 4. SECTION: PORTFOLIOS (IN-PAGE VIEW) -->
+      <section class="card" id="section-portfolios"
+        style="display: none; max-width: 900px; margin: 0 auto; width: 100%;">
+        <div class="card-header">
+          <h3 class="card-title">💼 จัดการพอร์ตการเทรด (Portfolios)</h3>
+          <button type="button" class="btn btn-teal btn-sm" id="btn-toggle-create-port">
+            ➕ เพิ่มพอร์ต
+          </button>
+        </div>
+        <div class="card-body">
+
+
+          <!-- New Portfolio Form (Collapsible) -->
+          <form id="form-create-portfolio" class="portfolio-create-box hidden">
+            <input type="hidden" id="edit-port-id" value="">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.85rem;">
+              <h4 id="portfolio-form-title" style="margin: 0;">➕ สร้างพอร์ตใหม่</h4>
+              <button type="button" class="btn btn-ghost btn-sm" id="btn-close-create-port"
+                style="color: var(--text-muted); font-size: 0.85rem; padding: 0.25rem 0.5rem;">✕ ยกเลิก</button>
+            </div>
+            <div class="form-row-2">
+              <div class="form-group">
+                <label for="new-port-name">ชื่อพอร์ต <span class="required">*</span></label>
+                <input type="text" id="new-port-name" placeholder="เช่น XAUUSD, Forex, Crypto" required>
+              </div>
+              <div class="form-group">
+                <label for="new-port-capital">ทุนเริ่มต้น ($)</label>
+                <input type="number" id="new-port-capital" step="any" placeholder="เช่น 1000" value="1000">
+              </div>
+            </div>
+            <div class="form-row-2">
+              <div class="form-group">
+                <label for="new-port-desc">คำอธิบายสั้นๆ (ถ้ามี)</label>
+                <input type="text" id="new-port-desc" placeholder="เช่น พอร์ตเทรดทองคำระบบ Scalping">
+              </div>
+              <div class="form-group">
+                <label for="new-port-risk">ความเสี่ยงต่อออเดอร์ (%)</label>
+                <input type="number" id="new-port-risk" step="any" min="0" max="100" placeholder="เช่น 1 หรือ 2"
+                  value="1">
+                <div id="new-port-risk-hint"
+                  style="font-size: 0.75rem; color: var(--teal-hover); margin-top: 4px; min-height: 1rem;"></div>
+              </div>
+            </div>
+            <div style="display: flex; gap: 0.5rem; justify-content: flex-end; margin-top: 1rem;">
+              <button type="button" class="btn btn-ghost btn-sm" id="btn-cancel-create-port">ยกเลิก</button>
+              <button type="submit" class="btn btn-teal btn-sm" id="btn-submit-create-port">➕ บันทึกพอร์ต</button>
+            </div>
+          </form>
+
+          <!-- Portfolio Items List Container -->
+          <div id="portfolio-items-list" class="portfolio-items-list">
+            <!-- Portfolios injected by JS -->
+          </div>
+        </div>
+      </section>
+
+      <!-- 5. SECTION: SETTINGS (IN-PAGE VIEW) -->
+      <section class="card" id="section-settings" style="display: none; max-width: 900px; margin: 0 auto; width: 100%;">
+        <div class="card-header">
+          <h3 class="card-title">⚙️ การตั้งค่าและเชื่อมต่อ (Settings &amp; Sync)</h3>
+        </div>
+        <div class="card-body">
+          <!-- Google Sheets Action Box (Upload & Download) -->
+          <div class="sheets-actions-card">
+            <div class="sheets-actions-header">
+              <div class="sheets-actions-title">
+                <span class="sheet-icon">📊</span>
+                <div>
+                  <div class="sheets-heading">เชื่อมต่อข้อมูล</div>
+                </div>
+              </div>
+            </div>
+
+            <div class="sheets-actions-grid">
+              <!-- Upload Button Item -->
+              <div class="sheet-action-item">
+                <div class="sheet-action-desc">
+                  <div class="sheet-action-name">☁️⬆️ อัปโหลดข้อมูล (Upload)</div>
+                </div>
+                <button type="button" class="btn btn-teal btn-upload-sheet" id="btn-upload-sheet">
+                  <span class="btn-icon">⬆️</span>
+                  <span class="btn-text">Upload</span>
+                </button>
+              </div>
+
+              <!-- Download Button Item -->
+              <div class="sheet-action-item">
+                <div class="sheet-action-desc">
+                  <div class="sheet-action-name">☁️⬇️ ดาวน์โหลดข้อมูล (Download)</div>
+                </div>
+                <button type="button" class="btn btn-secondary btn-download-sheet" id="btn-download-sheet">
+                  <span class="btn-icon">⬇️</span>
+                  <span class="btn-text">Download</span>
+                </button>
+              </div>
+            </div>
+
+            <div class="sheets-actions-footer">
+              <div class="sync-last-time" id="sync-last-time">
+                <span>🕒 อัปเดตล่าสุด: ยังไม่มีการซิงค์</span>
+              </div>
+            </div>
+
+            <!-- Collapsible GAS Config Panel -->
+            <div id="gas-config-panel" class="gas-config-panel hidden">
+              <div class="gas-config-row">
+                <label for="settings-sync-url">Google Apps Script Web App URL:</label>
+                <div class="gas-url-input-group">
+                  <input type="url" id="settings-sync-url" placeholder="https://script.google.com/macros/s/.../exec">
+                  <button type="button" class="btn btn-teal btn-sm" id="btn-save-settings-url">💾 บันทึก URL</button>
+                </div>
+              </div>
+              <div class="gas-code-actions">
+                <button type="button" class="btn btn-secondary btn-xs" id="btn-copy-gas-code">
+                  📋 คัดลอกโค้ด Code.gs ล่าสุด
+                </button>
+                <a href="https://docs.google.com/spreadsheets/d/1eq4VpN24Npj8VKIa1dELC0zHvwfHc3gEOS1GnAjkQks/edit"
+                  target="_blank" class="btn btn-ghost btn-xs">
+                  📊 ไปที่ Google Sheet
+                </a>
+              </div>
+            </div>
+          </div>
+
+          <!-- Account Info & Logout inside Settings -->
+          <div class="settings-account-box" style="margin-top: 1rem;">
+            <div class="settings-account-info">
+              <span class="account-avatar">👤</span>
+              <div>
+                <div class="account-name">ผู้ใช้: <strong>run</strong></div>
+                <div class="account-role text-muted text-sm">สิทธิ์ใช้งานระบบส่วนตัว (Admin)</div>
+              </div>
+            </div>
+            <button type="button" class="btn btn-ghost btn-sm" id="btn-settings-logout" title="ออกจากระบบ">
+              🚪 ออกจากระบบ
+            </button>
+          </div>
+        </div>
+      </section>
+
+    </main>
+
+
+    <!-- FLOATING ACTION BUTTON (+) AT BOTTOM RIGHT -->
+    <button type="button" class="floating-fab-btn" id="floating-btn-add-trade" aria-label="บันทึกการเทรดใหม่"
+      title="บันทึกการเทรดใหม่ (+)">
+      <svg viewBox="0 0 24 24" width="28" height="28" fill="none" stroke="currentColor" stroke-width="2.6"
+        stroke-linecap="round" stroke-linejoin="round">
+        <line x1="12" y1="5" x2="12" y2="19"></line>
+        <line x1="5" y1="12" x2="19" y2="12"></line>
+      </svg>
+    </button>
+
+  </div>
+
+  <!-- ================= MODAL: ADD / EDIT TRADE ================= -->
+  <div id="modal-trade" class="modal-backdrop hidden">
+    <div class="modal-dialog modal-dialog-lg">
+      <div class="modal-header">
+        <h3 id="modal-trade-title">📝 บันทึกการเทรดใหม่</h3>
+        <button type="button" class="modal-close" id="btn-close-trade-modal">&times;</button>
+      </div>
+
+      <form id="form-trade" autocomplete="off">
+        <input type="hidden" id="trade-id">
+
+        <div class="modal-body">
+
+
+
+          <div class="form-row-3">
+            <div class="form-group">
+              <label for="trade-portfolio">พอร์ตการเทรด <span class="required">*</span></label>
+              <select id="trade-portfolio" required>
+                <!-- Populated by JS -->
+              </select>
+              <div id="trade-portfolio-risk-info"
+                style="font-size: 0.75rem; color: var(--teal-hover); margin-top: 4px; display: none;"></div>
+            </div>
+
+            <div class="form-group">
+              <label for="trade-symbol">สินทรัพย์ / คู่เทรด (Symbol) <span class="required">*</span></label>
+              <input type="text" id="trade-symbol" placeholder="เช่น XAUUSD, EURUSD, SET50" required
+                list="symbols-datalist">
+              <datalist id="symbols-datalist">
+                <option value="XAUUSD">
+                <option value="EURUSD">
+                <option value="GBPUSD">
+                <option value="USDJPY">
+                <option value="BTCUSD">
+                <option value="SET50">
+                <option value="US30">
+                <option value="NAS100">
+              </datalist>
+            </div>
+
+            <div class="form-group">
+              <label>ฝั่งการเทรด (Position) <span class="required">*</span></label>
+              <div class="position-toggle">
+                <label class="toggle-option toggle-buy">
+                  <input type="radio" name="trade-position" value="BUY" checked>
+                  <span>BUY (Long)</span>
+                </label>
+                <label class="toggle-option toggle-sell">
+                  <input type="radio" name="trade-position" value="SELL">
+                  <span>SELL (Short)</span>
+                </label>
+              </div>
+            </div>
+          </div>
+
+          <div class="form-row-4">
+            <div class="form-group">
+              <label for="trade-lot">ขนาด Lot <span class="required">*</span></label>
+              <input type="number" id="trade-lot" step="any" min="0.001" placeholder="0.10" required>
+            </div>
+
+            <div class="form-group">
+              <label for="trade-entry-price">ราคาเข้า (Entry) <span class="required">*</span></label>
+              <input type="number" id="trade-entry-price" step="any" placeholder="เช่น 2650.50" required>
+            </div>
+
+            <div class="form-group">
+              <label for="trade-sl-pips">ระยะ SL (Pips)</label>
+              <input type="number" id="trade-sl-pips" step="any" min="0" placeholder="เช่น 20 หรือ 150">
+            </div>
+
+            <div class="form-group">
+              <label for="trade-status">สถานะออเดอร์</label>
+              <select id="trade-status">
+                <option value="รอ" selected>รอ</option>
+                <option value="กำลังถือ">กำลังถือ</option>
+                <option value="TP">TP</option>
+                <option value="SL">SL</option>
+                <option value="BE">BE</option>
+              </select>
+            </div>
+          </div>
+
+          <div class="form-row-4">
+            <div class="form-group">
+              <label for="trade-entry-time">วันเวลาเข้าเทรด</label>
+              <input type="datetime-local" id="trade-entry-time" required>
+            </div>
+
+            <div class="form-group">
+              <label for="trade-emotion-before">อารมณ์ก่อนเทรด</label>
+              <select id="trade-emotion-before">
+                <option value="มั่นใจตามแผน">🎯 มั่นใจตามแผน (Confident)</option>
+                <option value="ใจเย็น มีสติ">🧘 ใจเย็น มีสติ (Calm)</option>
+                <option value="กลัวตกรถ (FOMO)">⚡ กลัวตกรถ (FOMO)</option>
+                <option value="ลังเล ไม่แน่ใจ">🤔 ลังเล ไม่แน่ใจ (Hesitant)</option>
+                <option value="อยากแก้แค้นตลาด">🔥 อยากเอาคืน (Revenge)</option>
+              </select>
+            </div>
+
+            <div class="form-group">
+              <label for="trade-exit-time">วันเวลาปิดออเดอร์</label>
+              <input type="datetime-local" id="trade-exit-time">
+            </div>
+
+            <div class="form-group">
+              <label for="trade-emotion-after">อารมณ์หลังปิดออเดอร์</label>
+              <select id="trade-emotion-after">
+                <option value="พอใจ ทำตามแผนได้ดี">✅ พอใจ ทำตามแผนได้ดี</option>
+                <option value="เฉยๆ ยอมรับผลลัพธ์">🤝 เฉยๆ ยอมรับผลลัพธ์</option>
+                <option value="เสียดาย ปิดเร็วไป">🏃 เสียดาย ปิดเร็วไป</option>
+                <option value="หัวร้อน หลุดวินัย">😡 หัวร้อน หลุดวินัย</option>
+                <option value="กลัวการเข้าไม้ถัดไป">😨 กลัวการเข้าไม้ถัดไป</option>
+              </select>
+            </div>
+          </div>
+
+          <div class="form-row-3">
+            <div class="form-group">
+              <label for="trade-strategy">กลยุทธ์ / เหตุผลที่เข้าเทรด (Setup / Strategy)</label>
+              <input type="text" id="trade-strategy" placeholder="เช่น Breakout, FVG, Trend Follow">
+            </div>
+
+            <div class="form-group">
+              <label for="trade-tv-before">🔗 ลิงก์ TradingView ก่อนเข้า (Before)</label>
+              <input type="url" id="trade-tv-before" placeholder="เช่น https://www.tradingview.com/x/.../">
+            </div>
+
+            <div class="form-group">
+              <label for="trade-tv-after">🔗 ลิงก์ TradingView หลังปิด (After)</label>
+              <input type="url" id="trade-tv-after" placeholder="เช่น https://www.tradingview.com/x/.../">
+            </div>
+            <input type="hidden" id="data-img-before">
+            <input type="hidden" id="data-img-after">
+          </div>
+
+        </div>
+
+        <div class="modal-footer">
+          <button type="button" class="btn btn-ghost" id="btn-cancel-trade">ยกเลิก</button>
+          <button type="submit" class="btn btn-teal btn-lg" id="btn-save-trade">💾 บันทึกออเดอร์</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+
+
+  <!-- ================= MODAL: IMAGE GALLERY LIGHTBOX ================= -->
+  <div id="modal-lightbox" class="gallery-backdrop hidden" role="dialog" aria-modal="true" aria-label="แกลลอรีรูปภาพกราฟ">
+    <div class="gallery-container">
+      
+      <!-- Top Bar: Trade Info & Controls -->
+      <div class="gallery-header">
+        <div class="gallery-meta" id="gallery-meta">
+          <span class="gallery-symbol" id="gallery-symbol">EURUSD</span>
+          <span class="pos-pill pos-buy" id="gallery-position">BUY</span>
+          <span class="gallery-time" id="gallery-time">131069 18:52</span>
+          <span class="badge" id="gallery-status">TP</span>
+        </div>
+
+        <!-- Before / After Switcher Tabs -->
+        <div class="gallery-tabs" id="gallery-tabs">
+          <button type="button" class="gallery-tab-btn active" id="gallery-tab-before" data-type="before">
+            <span>📸 ก่อนเข้า (Before)</span>
+          </button>
+          <button type="button" class="gallery-tab-btn" id="gallery-tab-after" data-type="after">
+            <span>🎯 หลังปิด (After)</span>
+          </button>
+        </div>
+
+        <!-- Right Side Controls -->
+        <div class="gallery-actions">
+          <span class="gallery-counter" id="gallery-counter">1 / 1</span>
+          <a href="#" target="_blank" rel="noopener noreferrer" class="gallery-link-btn hidden" id="gallery-external-link" title="เปิดดูกราฟต้นฉบับ TradingView">
+            <span>🔗 TradingView</span> ↗
+          </a>
+          <button type="button" class="gallery-close-btn" id="btn-close-lightbox" title="ปิด (Esc)" aria-label="ปิด">✕</button>
+        </div>
+      </div>
+
+      <!-- Main Stage: Image & Navigation Arrows -->
+      <div class="gallery-stage">
+        <button type="button" class="gallery-arrow gallery-arrow-prev" id="gallery-btn-prev" title="รูปก่อนหน้า (←)" aria-label="รูปก่อนหน้า">
+          ‹
+        </button>
+
+        <div class="gallery-viewport">
+          <img id="lightbox-img" class="gallery-img" src="" alt="กราฟการเทรด">
+          <div id="gallery-fallback-box" class="gallery-fallback-box hidden">
+            <div class="gallery-fallback-icon">📈</div>
+            <div class="gallery-fallback-title" id="gallery-fallback-title">ไม่สามารถแสดงรูปตัวอย่างได้</div>
+            <p class="text-muted text-sm">เนื่องจากข้อจำกัดของลิงก์ภายนอก ท่านสามารถเปิดดูกราฟต้นฉบับได้โดยตรง</p>
+            <a href="#" target="_blank" rel="noopener noreferrer" class="btn btn-teal btn-sm" id="gallery-fallback-link" style="margin-top: 8px;">🔗 เปิดดูกราฟใน TradingView ↗</a>
+          </div>
+        </div>
+
+        <button type="button" class="gallery-arrow gallery-arrow-next" id="gallery-btn-next" title="รูปถัดไป (→)" aria-label="รูปถัดไป">
+          ›
+        </button>
+      </div>
+
+      <!-- Footer: Caption & Thumbnail Strip -->
+      <div class="gallery-footer">
+        <div class="gallery-caption" id="lightbox-caption"></div>
+        <div class="gallery-thumbnails-strip" id="gallery-thumbnails-strip">
+          <!-- Populated dynamically by JS -->
+        </div>
+      </div>
+
+    </div>
+  </div>
+
+
+  <!-- ================= MODAL: CONFIRM DELETE PORTFOLIO ================= -->
+  <div id="modal-confirm-delete-port" class="modal-backdrop hidden">
+    <div class="modal-dialog modal-dialog-sm">
+      <div class="modal-header">
+        <h3>🗑️ ยืนยันการลบพอร์ต</h3>
+        <button type="button" class="modal-close" id="btn-close-delete-port-modal">&times;</button>
+      </div>
+      <div class="modal-body" style="font-size: 1rem; line-height: 1.6; text-align: center; padding: 1.5rem 1rem;">
+        <p id="delete-port-confirm-message"
+          style="margin: 0; font-size: 1.1rem; color: var(--text-primary); font-weight: 500;">
+          ต้องการที่จะลบหรือไม่
+        </p>
+        <p style="margin: 0.5rem 0 0 0; color: var(--text-muted); font-size: 0.85rem;">
+          (รายการเทรดทั้งหมดในพอร์ตนี้จะถูกลบไปด้วย)</p>
+      </div>
+      <div class="modal-footer" style="display: flex; gap: 0.75rem; justify-content: flex-end;">
+        <button type="button" class="btn btn-ghost" id="btn-cancel-delete-port" style="min-width: 80px;">ไม่ใช่</button>
+        <button type="button" class="btn btn-danger" id="btn-confirm-delete-port"
+          style="min-width: 80px; background: var(--color-loss, #ef4444); color: #fff; border: 1px solid var(--color-loss, #ef4444);">ลบ</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ================= MODAL: CONFIRM DELETE TRADE ================= -->
+  <div id="modal-confirm-delete-trade" class="modal-backdrop hidden">
+    <div class="modal-dialog modal-dialog-sm">
+      <div class="modal-header">
+        <h3>🗑️ ยืนยันการลบรายการเทรด</h3>
+        <button type="button" class="modal-close" id="btn-close-delete-trade-modal">&times;</button>
+      </div>
+      <div class="modal-body" style="font-size: 1rem; line-height: 1.6; text-align: center; padding: 1.5rem 1rem;">
+        <p id="delete-trade-confirm-message"
+          style="margin: 0; font-size: 1.15rem; color: var(--text-primary); font-weight: 500;">
+          ต้องการที่จะลบหรือไม่
+        </p>
+      </div>
+      <div class="modal-footer" style="display: flex; gap: 0.75rem; justify-content: flex-end;">
+        <button type="button" class="btn btn-ghost" id="btn-cancel-delete-trade" style="min-width: 80px;">ไม่</button>
+        <button type="button" class="btn btn-danger" id="btn-confirm-delete-trade"
+          style="min-width: 80px; background: var(--color-loss, #ef4444); color: #fff; border: 1px solid var(--color-loss, #ef4444);">ลบ</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ================= MODAL: CONFIRM DOWNLOAD ================= -->
+  <div id="modal-confirm-download" class="modal-backdrop hidden">
+    <div class="modal-dialog modal-dialog-sm">
+      <div class="modal-header">
+        <h3>☁️⬇️ ยืนยันดาวน์โหลดจาก Google Sheets</h3>
+        <button type="button" class="modal-close" id="btn-close-download-modal">&times;</button>
+      </div>
+      <div class="modal-body" style="font-size: 0.95rem; line-height: 1.6;">
+        <p>คุณต้องการดึงข้อมูลบันทึกการเทรดและพอร์ตจาก Google Sheet ลงมาบันทึกในเครื่องใช่หรือไม่?</p>
+        <div class="callout-box info" style="margin-top: 0.75rem;">
+          💡 <strong>คำแนะนำ:</strong> ข้อมูลบนเครื่องจะถูกอัปเดตตาม Google Sheet
+          หากมีข้อมูลใหม่ในเครื่องที่ยังไม่ได้ซิงค์ แนะนำให้กด <strong>Upload ขึ้น Google Sheet</strong> ก่อน
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-ghost" id="btn-cancel-download">ยกเลิก</button>
+        <button type="button" class="btn btn-teal" id="btn-confirm-download">📥 ยืนยันดาวน์โหลด</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ================= MODAL: GAS UPDATE / SCRIPT INFO ================= -->
+  <div id="modal-gas-update" class="modal-backdrop hidden">
+    <div class="modal-dialog">
+      <div class="modal-header">
+        <h3>📋 Google Apps Script (Code.gs) สำหรับ Download</h3>
+        <button type="button" class="modal-close" id="btn-close-gas-modal">&times;</button>
+      </div>
+      <div class="modal-body" style="font-size: 0.92rem; line-height: 1.6;">
+        <div class="callout-box warning" style="margin-bottom: 1rem;" id="gas-modal-notice">
+          ℹ️ <strong>วิธีเปิดใช้งานฟังก์ชัน Download:</strong> หาก Google Apps Script บนชีตของคุณยังเป็นเวอร์ชันเดิม
+          กรุณานำโค้ด Code.gs ล่าสุดไปวางในชีต
+        </div>
+        <ol style="padding-left: 1.25rem; display: flex; flex-direction: column; gap: 0.5rem; margin-bottom: 1rem;">
+          <li>เปิด Google Sheets ของคุณ (กดปุ่มด้านล่าง)</li>
+          <li>ไปที่เมนู <strong>ส่วนขยาย (Extensions)</strong> &gt; <strong>Apps Script</strong></li>
+          <li>เปิดไฟล์ <code>Code.gs</code> แล้วลบโค้ดเดิม นำโค้ดใหม่ไปวางแทนที่</li>
+          <li>กดปุ่ม <strong>Deploy (การทำให้ใช้งานได้)</strong> &gt; <strong>Manage deployments</strong> &gt; แก้ไข
+            &gt; Version: <strong>New version</strong> &gt; Deploy</li>
+        </ol>
+        <button type="button" class="btn btn-teal btn-block" id="btn-copy-gas-code-modal">
+          📋 คัดลอกโค้ด Code.gs ใหม่ทั้งหมด
+        </button>
+      </div>
+      <div class="modal-footer">
+        <a href="https://docs.google.com/spreadsheets/d/1eq4VpN24Npj8VKIa1dELC0zHvwfHc3gEOS1GnAjkQks/edit"
+          target="_blank" rel="noopener noreferrer" class="btn btn-secondary">
+          📊 เปิด Google Sheet
+        </a>
+        <button type="button" class="btn btn-ghost" id="btn-close-gas-modal-btn">ปิด</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- TOAST NOTIFICATION CONTAINER -->
+  <div id="toast-container" class="toast-container"></div>
+
+  <!-- APP LOGIC SCRIPT -->
+  <script src="app.js?v=18"></script>
+</body>
+
+</html>
